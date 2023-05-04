@@ -45,6 +45,10 @@ CreateMenu()
 
 scriptCount := 0
 
+If !FileExist(A_ScriptDir "\scripts"){
+    DirCreate(A_ScriptDir "\scripts")
+}
+
 ; 遍历scripts目录下的ahk文件
 Loop Files A_ScriptDir "\scripts\*.ahk"
 {
