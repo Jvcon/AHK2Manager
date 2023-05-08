@@ -20,7 +20,6 @@ Copyright 2022-2023 Jacques Yip
 #Requires AutoHotkey >=v2.0
 
 #Include <DefaultInclude>
-#Include <WinRun>
 #Include <Array>
 
 Paths := EnvGet("PATH")
