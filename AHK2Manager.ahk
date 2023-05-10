@@ -41,8 +41,6 @@ global closeMenu := Menu()
 
 CreateMenu()
 
-scriptCount := 0
-
 If !FileExist(A_ScriptDir "\scripts"){
     DirCreate(A_ScriptDir "\scripts")
 }
@@ -54,9 +52,8 @@ Loop Files A_ScriptDir "\scripts\*.ahk"
         WinKill
     }
     SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
-    match := RegExMatch(FileNameNoExt, "([a-z]|[A-Z])\w+", &mathcnVar)
-    scriptCount += 1
-    menuName := mathcnVar[]
+    NeedleRegEx:="(\+|\!)(\w|\s)([0-9]+.\s)?"
+    menuName:= RegExReplace(FileNameNoExt,NeedleRegEx)
     scriptObj := Object()
     scriptObj.fileName := OutFileName
     scriptObj.menuName := menuName
