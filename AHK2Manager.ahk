@@ -21,9 +21,11 @@ Copyright 2022-2023 Jacques Yip
 
 #Include <DefaultInclude>
 #Include <Array>
+#Include <WindowsTheme>
 
 Paths := EnvGet("PATH")
 EnvSet("PATH", A_ScriptDir "\bin`;" Paths)
+global sysThemeMode := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme")
 
 global scriptList := Array()
 global scriptMap := Map()
@@ -40,6 +42,7 @@ global restartMenu := Menu()
 global closeMenu := Menu()
 
 CreateMenu()
+WindowsTheme.SetAppMode(!sysThemeMode)
 
 If !FileExist(A_ScriptDir "\scripts"){
     DirCreate(A_ScriptDir "\scripts")
@@ -134,9 +137,6 @@ OpenTask(ItemName, ItemPos, MyMenu) {
     Run A_ScriptDir "\scripts\" scriptItem.fileName
     if (scriptItem.scriptType != "Once") {
         UpdateTaskStatus(ItemName, 1)
-        ; ; debug
-        ; newScripts := scriptMap[ItemName]
-        ; MsgBox newScripts.status
         RecreateMenu()
     }
     return
@@ -177,7 +177,7 @@ OpenAllTask(*) {
 CloseAllTask(*) {
     for menuName, scriptItem in scriptMap {
         If (scriptItem.status = 1) {
-            WinClose(scriptItem.fileName " - AutoHotkey", , ,)
+            try WinClose(scriptItem.fileName " - AutoHotkey", , ,)
             UpdateTaskStatus(menuName, 0)
         }
     }
@@ -199,6 +199,7 @@ ProManager(*) {
     WmiInfo := GetWMI("AutoHotkey.exe")
     ShowIndex := 0
     PMGui := Gui()
+    WindowsTheme.SetWindowAttribute(PMGui,!sysThemeMode)
     PMGui.SetFont("s9", "Arial")
     PMLV := PMGui.Add("ListView", "x2 y0 w250 h200", ["Index", "PID", "Script Name", "Memory"])
     for menuName, scriptItem in scriptMap {
@@ -211,6 +212,7 @@ ProManager(*) {
     }
     PMLV.ModifyCol()
     PMGui.Title := "Process List"
+    WindowsTheme.SetWindowTheme(PMGui,!sysThemeMode)
     PMGui.Show
 }
 
@@ -228,6 +230,7 @@ ReloadTray(*){
 }
 
 ExitTray(*){
+    CloseAllTask()
     ExitApp
     Return
 }
