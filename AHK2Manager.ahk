@@ -11,10 +11,10 @@ Copyright 2022-2023 Jacques Yip
 
 ;@Ahk2Exe-SetName AHK2 Manager
 ;@Ahk2Exe-SetDescription AHK2 Manager: A toolkit to control all running instances of AutoHotkey(V2.0+).
-;@Ahk2Exe-SetVersion v1.0
 ;@Ahk2Exe-SetCopyright Jacques Yip
 ;@Ahk2Exe-SetOrigFilename AHK2Manager.exe
-
+;@Ahk2Exe-SetMainIcon \icons\quesbox.ico
+;@Ahk2Exe-AddResource \icons\quesbox_darkmode.ico
 ; --------------------- GLOBAL --------------------------
 
 #Requires AutoHotkey >=v2.0
