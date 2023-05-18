@@ -22,12 +22,16 @@ jobs:
           compression: upx
           in: ""
           out: build
+      - name: Do domething with builded scripts
+        shell: pwsh
+        run: |
+          Get-ChildItemSimple .\build
       - name: Release
         uses: softprops/action-gh-release@v0.1.15
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            build/AHK2Manager_x64.exe
-            build/AHK2Manager_x86.exe
+            .\build\AHK2Manager_x64.exe
+            .\build\AHK2Manager_x86.exe
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
