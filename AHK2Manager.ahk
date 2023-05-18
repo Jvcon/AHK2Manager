@@ -9,12 +9,13 @@ Copyright 2022-2023 Jacques Yip
 
 ; --------------------- COMPILER DIRECTIVES --------------------------
 
-;@Ahk2Exe-SetName AHK2 Manager
-;@Ahk2Exe-SetDescription AHK2 Manager: A toolkit to control all running instances of AutoHotkey(V2.0+).
+;@Ahk2Exe-SetName AHK2Manager
+;@Ahk2Exe-SetDescription A toolkit to control all running instances of AutoHotkey(V2.0+).
+;@Ahk2Exe-SetVersion 0.0.0.6
 ;@Ahk2Exe-SetCopyright Jacques Yip
 ;@Ahk2Exe-SetOrigFilename AHK2Manager.exe
-;@Ahk2Exe-SetMainIcon \icons\quesbox.ico
-;@Ahk2Exe-AddResource \icons\quesbox_darkmode.ico
+;@Ahk2Exe-SetMainIcon icons\main_light.ico
+;@Ahk2Exe-AddResource icons\main_dark.ico, 160
 ; --------------------- GLOBAL --------------------------
 
 #Requires AutoHotkey >=v2.0
@@ -22,9 +23,12 @@ Copyright 2022-2023 Jacques Yip
 #Include <DefaultInclude>
 #Include <Array>
 #Include <WindowsTheme>
+#Include <JSON>
 
 Paths := EnvGet("PATH")
 EnvSet("PATH", A_ScriptDir "\bin`;" Paths)
+SplitPath A_ScriptName, , , , &appName
+
 global sysThemeMode := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme")
 
 global scriptList := Array()
@@ -44,9 +48,11 @@ global closeMenu := Menu()
 CreateMenu()
 WindowsTheme.SetAppMode(!sysThemeMode)
 
-If !FileExist(A_ScriptDir "\scripts"){
-    DirCreate(A_ScriptDir "\scripts")
-}
+FolderCheckList := ["scripts","icons","lib"]
+for item in FolderCheckList
+    If !FileExist(A_ScriptDir "\" item) {
+        DirCreate(A_ScriptDir "\" item)
+    }
 
 ; 遍历scripts目录下的ahk文件
 Loop Files A_ScriptDir "\scripts\*.ahk"
@@ -85,13 +91,28 @@ AddMenuItem(unOpenScriptListDeamon, 0, false)
 OpenAllTask()
 
 ; A_TrayMenu := A_TrayMenu
-TraySetIcon(A_ScriptDir "\icons\quesbox_darkmode.ico")
-A_IconTip:= "Quesbox"
+if(A_IsCompiled){
+    if (sysThemeMode){
+        TraySetIcon(A_ScriptName,-159)
+    }
+    else{
+        TraySetIcon(A_ScriptName,-160)
+    }
+}
+else{
+    if (sysThemeMode){
+        TraySetIcon(A_ScriptDir "\icons\main_light.ico")
+    }
+    else {
+        TraySetIcon(A_ScriptDir "\icons\main_dark.ico")
+    }
+}
+A_IconTip := appName
 A_TrayMenu.Delete
 A_TrayMenu.ClickCount := 1
-A_TrayMenu.Add "Quesbox", ShowTray
-A_TrayMenu.ToggleEnable("Quesbox")
-A_TrayMenu.Default := "Quesbox"
+A_TrayMenu.Add appName, ShowTray
+A_TrayMenu.ToggleEnable(appName)
+A_TrayMenu.Default := appName
 A_TrayMenu.Add
 A_TrayMenu.Add "Run", startMenu
 A_TrayMenu.Add
@@ -110,25 +131,25 @@ Return
 ; --------------------- SHORTCUTS --------------------------
 
 ; Ctrl + Alt + LButton, 启动
-^!LButton::{
+^!LButton:: {
     startMenu.Show
     Return
 }
 
 ; Ctrl + Alt + RButton, 关闭
-^!RButton::{
+^!RButton:: {
     closeMenu.Show
     Return
 }
 
 ; Ctrl + Alt + MButton, 重启
-^!MButton::{
+^!MButton:: {
     restartMenu.Show
     Return
 }
 
-; Ctrl + Shift + R, 重新加载
-#+r::ReloadTray
+; Win + Shift + R, 重新加载
+#+r:: ReloadTray
 
 ; --------------------- MENU EVENT RESPONSE --------------------------
 
@@ -205,7 +226,7 @@ ProManager(*) {
     for menuName, scriptItem in scriptMap {
         If (scriptItem.status = 1) {
             ShowIndex += 1
-            procId := WinGetPID(scriptItem.fileName " - AutoHotkey")
+            try procId := WinGetPID(scriptItem.fileName " - AutoHotkey")
             memory := GetMemory(WmiInfo, procId)
             PMLV.Add(, ShowIndex, procId, scriptItem.fileName, memory)
         }
@@ -224,12 +245,12 @@ Test(ItemName, ItemPos, MyMenu) {
     MsgBox("You selected" ItemName)
 }
 
-ReloadTray(*){
+ReloadTray(*) {
     Reload
     Return
 }
 
-ExitTray(*){
+ExitTray(*) {
     CloseAllTask()
     ExitApp
     Return
@@ -268,24 +289,23 @@ RecreateMenu(*) {
 
 
     for menuName, scriptItem in scriptMap {
-        If (scriptItem.status = 0) {
-            if (scriptItem.scriptType = "TEMP") {
+        if (scriptItem.scriptType = "ONCE") {
+            unOpenScriptListOnce.Push(menuName)
+        }
+        if (scriptItem.scriptType = "TEMP") {
+            If (scriptItem.status = 0) {
                 unOpenScriptListTemp.Push(menuName)
             }
-            else if (scriptItem.scriptType = "ONCE") {
-                unOpenScriptListOnce.Push(menuName)
-            }
             else {
-                unOpenScriptListDeamon.Push(menuName)
+                OpenScriptListTemp.Push(menuName)
             }
         }
-        If (scriptItem.status = 1) {
-            if (scriptItem.scriptType = "TEMP") {
-                OpenScriptListTemp.Push(menuName)
+        else {
+            If (scriptItem.status = 0) {
+                unOpenScriptListDeamon.Push(menuName)
             }
             else {
                 OpenScriptListDeamon.Push(menuName)
-
             }
         }
     }
@@ -355,6 +375,5 @@ GetMemory(WmiInfo, PID)
             Return '%' usage . "K"
         }
     }
-
-    Return "0K"
+    Return '0K'
 }

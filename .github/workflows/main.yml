@@ -4,9 +4,8 @@ on:
   push:
     branches: 
       - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
@@ -23,8 +22,12 @@ jobs:
           compression: upx
           in: ""
           out: build
-          icon: "icons"
-      - name: Do domething with builded scripts
-        shell: pwsh
-        run: |
-          ls build
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.15
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            AHK2Manager_x64.exe
+            AHK2Manager_x86.exe
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
