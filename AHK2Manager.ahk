@@ -61,7 +61,7 @@ Loop Files A_ScriptDir "\scripts\*.ahk"
         WinKill
     }
     SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
-    NeedleRegEx:="(\+|\!)(\w|\s)([0-9]+.\s)?"
+    NeedleRegEx:="(\+|\!)(\s)?([0-9]+.\s)?"
     menuName:= RegExReplace(FileNameNoExt,NeedleRegEx)
     scriptObj := Object()
     scriptObj.fileName := OutFileName
