@@ -11,7 +11,7 @@ Copyright 2022-2023 Jacques Yip
 
 ;@Ahk2Exe-SetName AHK2Manager
 ;@Ahk2Exe-SetDescription AHK2Manager
-;@Ahk2Exe-SetVersion 0.0.0.7
+;@Ahk2Exe-SetVersion 0.0.0.6
 ;@Ahk2Exe-SetCopyright Jacques Yip
 ;@Ahk2Exe-SetOrigFilename AHK2Manager.exe
 ;@Ahk2Exe-SetMainIcon icons\main_light.ico
@@ -26,8 +26,14 @@ Copyright 2022-2023 Jacques Yip
 #Include <JSON>
 #Include <ConfMan>
 
-FileInstall("lang\en_us.ini","lang\en_us.ini",1)
-FileInstall("lang\zh_cn.ini","lang\zh_cn.ini",1)
+FolderCheckList := ["lang", "scripts", "icons", "lib"]
+for item in FolderCheckList
+    If !FileExist(A_ScriptDir "\" item) {
+        DirCreate(A_ScriptDir "\" item)
+    }
+
+FileInstall(".\lang\en_us.ini",".\lang\en_us.ini",1)
+FileInstall(".\lang\zh_cn.ini",".\lang\zh_cn.ini",1)
 
 Paths := EnvGet("PATH")
 EnvSet("PATH", A_ScriptDir "\bin`;" Paths)
@@ -72,12 +78,6 @@ CreateLangMenu()
 CreateTrayMenu()
 
 CreateMenu()
-
-FolderCheckList := ["scripts", "icons", "lib"]
-for item in FolderCheckList
-    If !FileExist(A_ScriptDir "\" item) {
-        DirCreate(A_ScriptDir "\" item)
-    }
 
 ; 遍历scripts目录下的ahk文件
 Loop Files A_ScriptDir "\scripts\*.ahk"
