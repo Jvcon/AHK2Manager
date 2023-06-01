@@ -1,6 +1,6 @@
 /*
 AHK2 Manager
-Written using AutoHotkey v2.0+ (http://www.autohotkey.com/)
+A toolkit to control all running instances of AutoHotkey(V2.0+)，written using AutoHotkey v2.0+ (http://www.autohotkey.com/)
 By Jacques Yip
 
 Copyright 2022-2023 Jacques Yip
@@ -10,7 +10,7 @@ Copyright 2022-2023 Jacques Yip
 ; --------------------- COMPILER DIRECTIVES --------------------------
 
 ;@Ahk2Exe-SetName AHK2Manager
-;@Ahk2Exe-SetDescription A toolkit to control all running instances of AutoHotkey(V2.0+).
+;@Ahk2Exe-SetDescription AHK2Manager
 ;@Ahk2Exe-SetVersion 0.0.0.6
 ;@Ahk2Exe-SetCopyright Jacques Yip
 ;@Ahk2Exe-SetOrigFilename AHK2Manager.exe
@@ -24,12 +24,29 @@ Copyright 2022-2023 Jacques Yip
 #Include <Array>
 #Include <WindowsTheme>
 #Include <JSON>
+#Include <ConfMan>
+
+FileInstall("lang\en_us.ini","lang\en_us.ini",1)
+FileInstall("lang\zh_cn.ini","lang\zh_cn.ini",1)
 
 Paths := EnvGet("PATH")
 EnvSet("PATH", A_ScriptDir "\bin`;" Paths)
 SplitPath A_ScriptName, , , , &appName
 
 global sysThemeMode := RegRead("HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme")
+
+CONF_PATH := A_ScriptDir "\setting.ini"
+CONF := ConfMan.GetConf(CONF_PATH)
+CONF.Setting := {
+    language: "en_us"
+}
+CONF.Setting.SetOpts("PARAMS")
+
+If !FileExist(CONF_PATH) {
+    CONF.WriteFile()
+}
+
+CONF.ReadFile()
 
 global scriptList := Array()
 global scriptMap := Map()
@@ -41,14 +58,22 @@ unOpenScriptListDeamon := Array()
 OpenScriptListTemp := Array()
 OpenScriptListDeamon := Array()
 
+global langMenu := Menu()
 global startMenu := Menu()
 global restartMenu := Menu()
 global closeMenu := Menu()
 
-CreateMenu()
 WindowsTheme.SetAppMode(!sysThemeMode)
 
-FolderCheckList := ["scripts","icons","lib"]
+InitialLanguage()
+
+CreateLangMenu()
+
+CreateTrayMenu()
+
+CreateMenu()
+
+FolderCheckList := ["scripts", "icons", "lib"]
 for item in FolderCheckList
     If !FileExist(A_ScriptDir "\" item) {
         DirCreate(A_ScriptDir "\" item)
@@ -61,8 +86,8 @@ Loop Files A_ScriptDir "\scripts\*.ahk"
         WinKill
     }
     SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
-    NeedleRegEx:="(\+|\!)(\s)?([0-9]+.\s)?"
-    menuName:= RegExReplace(FileNameNoExt,NeedleRegEx)
+    NeedleRegEx := "(\+|\!)(\s)?([0-9]+.\s)?"
+    menuName := RegExReplace(FileNameNoExt, NeedleRegEx)
     scriptObj := Object()
     scriptObj.fileName := OutFileName
     scriptObj.menuName := menuName
@@ -89,41 +114,6 @@ AddMenuItem(unOpenScriptListOnce, 0, true)
 AddMenuItem(unOpenScriptListDeamon, 0, false)
 
 OpenAllTask()
-
-; A_TrayMenu := A_TrayMenu
-if(A_IsCompiled){
-    if (sysThemeMode){
-        TraySetIcon(A_ScriptName,-159)
-    }
-    else{
-        TraySetIcon(A_ScriptName,-160)
-    }
-}
-else{
-    if (sysThemeMode){
-        TraySetIcon(A_ScriptDir "\icons\main_light.ico")
-    }
-    else {
-        TraySetIcon(A_ScriptDir "\icons\main_dark.ico")
-    }
-}
-A_IconTip := appName
-A_TrayMenu.Delete
-A_TrayMenu.ClickCount := 1
-A_TrayMenu.Add appName, ShowTray
-A_TrayMenu.ToggleEnable(appName)
-A_TrayMenu.Default := appName
-A_TrayMenu.Add
-A_TrayMenu.Add "Run", startMenu
-A_TrayMenu.Add
-A_TrayMenu.Add "Restart", restartMenu
-A_TrayMenu.Add "Close", closeMenu
-A_TrayMenu.Add "Close All", CloseAllTask
-A_TrayMenu.Add
-A_TrayMenu.Add "Proccess Manager", ProManager
-A_TrayMenu.Add
-A_TrayMenu.Add "Reload", ReloadTray
-A_TrayMenu.Add "Exit", ExitTray
 
 Persistent
 Return
@@ -220,20 +210,21 @@ ProManager(*) {
     WmiInfo := GetWMI("AutoHotkey.exe")
     ShowIndex := 0
     PMGui := Gui()
-    WindowsTheme.SetWindowAttribute(PMGui,!sysThemeMode)
+    WindowsTheme.SetWindowAttribute(PMGui, !sysThemeMode)
     PMGui.SetFont("s9", "Arial")
-    PMLV := PMGui.Add("ListView", "x2 y0 w250 h200", ["Index", "PID", "Script Name", "Memory"])
+    PMLV := PMGui.Add("ListView", "x2 y0 w250 h200", [lGUIIndex, lGUIPid, lGUIScriptname, lGUIMemory])
     for menuName, scriptItem in scriptMap {
         If (scriptItem.status = 1) {
             ShowIndex += 1
             try procId := WinGetPID(scriptItem.fileName " - AutoHotkey")
-            memory := GetMemory(WmiInfo, procId)
+            memory := GetProcessMemoryInfo(procId)
             PMLV.Add(, ShowIndex, procId, scriptItem.fileName, memory)
         }
     }
     PMLV.ModifyCol()
+    PMLV.ModifyCol(2, "Integer")
     PMGui.Title := "Process List"
-    WindowsTheme.SetWindowTheme(PMGui,!sysThemeMode)
+    WindowsTheme.SetWindowTheme(PMGui, !sysThemeMode)
     PMGui.Show
 }
 
@@ -245,6 +236,31 @@ Test(ItemName, ItemPos, MyMenu) {
     MsgBox("You selected" ItemName)
 }
 
+SwitchLanguage(ItemName, ItemPos, MyMenu) {
+    CONF.Setting.language := ItemName
+    InitialLanguage()
+    CreateTrayMenu()
+    CreateLangMenu()
+}
+
+InitialLanguage(*) {
+    LANG_PATH := A_ScriptDir "\lang\" CONF.Setting.language ".ini"
+
+    global lTrayExit := IniRead(LANG_PATH, "Tray", "exit")
+    global lTrayReload := IniRead(LANG_PATH, "Tray", "reload")
+    global lTrayProcMan := IniRead(LANG_PATH, "Tray", "procman")
+    global lTrayLang := IniRead(LANG_PATH, "Tray", "lang")
+    global lTrayCloseAll := IniRead(LANG_PATH, "Tray", "closeall")
+    global lTrayClose := IniRead(LANG_PATH, "Tray", "close")
+    global lTrayRestart := IniRead(LANG_PATH, "Tray", "restart")
+    global lTrayStart := IniRead(LANG_PATH, "Tray", "start")
+
+    global lGUIIndex := IniRead(LANG_PATH, "GUI", "index")
+    global lGUIMemory := IniRead(LANG_PATH, "GUI", "memory")
+    global lGUIPid := IniRead(LANG_PATH, "GUI", "pid")
+    global lGUIScriptname := IniRead(LANG_PATH, "GUI", "scriptname")
+}
+
 ReloadTray(*) {
     Reload
     Return
@@ -252,24 +268,72 @@ ReloadTray(*) {
 
 ExitTray(*) {
     CloseAllTask()
+    CONF.WriteFile()
     ExitApp
     Return
 }
 
+CreateTrayMenu(*) {
+    ; A_TrayMenu := A_TrayMenu
+    if (A_IsCompiled) {
+        if (sysThemeMode) {
+            TraySetIcon(A_ScriptName, -159)
+        }
+        else {
+            TraySetIcon(A_ScriptName, -160)
+        }
+    }
+    else {
+        if (sysThemeMode) {
+            TraySetIcon(A_ScriptDir "\icons\main_light.ico")
+        }
+        else {
+            TraySetIcon(A_ScriptDir "\icons\main_dark.ico")
+        }
+    }
+    A_IconTip := appName
+    A_TrayMenu.Delete
+    A_TrayMenu.ClickCount := 1
+    A_TrayMenu.Add appName, ShowTray
+    A_TrayMenu.ToggleEnable(appName)
+    A_TrayMenu.Default := appName
+    A_TrayMenu.Add
+    A_TrayMenu.Add lTrayStart, startMenu
+    A_TrayMenu.Add
+    A_TrayMenu.Add lTrayRestart, restartMenu
+    A_TrayMenu.Add lTrayClose, closeMenu
+    A_TrayMenu.Add lTrayCloseAll, CloseAllTask
+    A_TrayMenu.Add
+    A_TrayMenu.Add lTrayLang, langMenu
+    A_TrayMenu.Add lTrayProcMan, ProManager
+    A_TrayMenu.Add
+    A_TrayMenu.Add lTrayReload, ReloadTray
+    A_TrayMenu.Add lTrayExit, ExitTray
+}
+
+CreateLangMenu(*) {
+    langMenu.Delete
+    Loop Files A_ScriptDir "\lang\*.ini" {
+        SplitPath A_LoopFileName, , , , &FileNameNoExt
+        langMenu.Add(FileNameNoExt, SwitchLanguage)
+    }
+    langMenu.Check(CONF.Setting.language)
+}
+
 CreateMenu(*) {
-    startMenu.Add("Start", Test)
-    startMenu.ToggleEnable("Start")
-    startMenu.Default := "Start"
+    startMenu.Add(lTrayStart, Test)
+    startMenu.ToggleEnable(lTrayStart)
+    startMenu.Default := lTrayStart
     startMenu.Add
 
-    closeMenu.Add("Close", Test)
-    closeMenu.ToggleEnable("Close")
-    closeMenu.Default := "Close"
+    closeMenu.Add(lTrayClose, Test)
+    closeMenu.ToggleEnable(lTrayClose)
+    closeMenu.Default := lTrayClose
     closeMenu.Add
 
-    restartMenu.Add("Restart", Test)
-    restartMenu.ToggleEnable("Restart")
-    restartMenu.Default := "Restart"
+    restartMenu.Add(lTrayRestart, Test)
+    restartMenu.ToggleEnable(lTrayRestart)
+    restartMenu.Default := lTrayRestart
     restartMenu.Add
 }
 
@@ -365,15 +429,17 @@ GetWMI(ProcessName)
 }
 
 ; 给定进程PID，获取其内存消耗
-GetMemory(WmiInfo, PID)
-{
-    for ObjProc in WmiInfo
+GetProcessMemoryInfo(PID) {
+    size := 440
+    pmcex := Buffer(size, 0) ; V1toV2: if 'pmcex' is a UTF-16 string, use 'VarSetStrCapacity(&pmcex, size)'
+    ret := ""
+
+    hProcess := DllCall("OpenProcess", "UInt", 0x400 | 0x0010, "Int", 0, "Ptr", PID, "Ptr")
+    if (hProcess)
     {
-        if (ObjProc.ProcessID = PID)
-        {
-            usage := Round(ObjProc.WorkingSetSize / 1024)
-            Return '%' usage . "K"
-        }
+        if (DllCall("psapi.dll\GetProcessMemoryInfo", "Ptr", hProcess, "Ptr", pmcex, "UInt", size))
+            ret := NumGet(pmcex, (A_PtrSize = 8 ? "16" : "12"), "UInt") / 1024 . " K"
+        DllCall("CloseHandle", "Ptr", hProcess)
     }
-    Return '0K'
+    return ret
 }
