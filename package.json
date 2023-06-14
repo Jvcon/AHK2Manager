@@ -1,0 +1,28 @@
+{
+    "name": "AHK2Manager",
+    "version": "0.0.6",
+    "description": "",
+    "main": "AHK2Manager.ahk",
+    "scripts": {
+        "start": "nodemon --exec AHK2Manager.ahk",
+        "build": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./build.ps1 %npm_package_version%"
+    },
+    "nodemonConfig": {
+        "ignore": [
+            "node_modules",
+            "dist"
+        ],
+        "delay": "250",
+        "watch": [
+            "*",
+            "scripts/*"
+        ],
+        "ext": "js, json, ahk, ini, conf"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "",
+    "dependencies": {
+        "nodemon": "^2.0.22"
+    }
+}
