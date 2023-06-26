@@ -8,7 +8,7 @@
         "build": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./build.ps1 %npm_package_version% prod %npm_package_name%",
         "test": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./build.ps1 %npm_package_version% dev %npm_package_name%",
         "version": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./build.ps1 %npm_package_version% version %npm_package_name%",
-        "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -w -r 0"
+        "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -w 0"
     },
     "nodemonConfig": {
         "ignore": [
