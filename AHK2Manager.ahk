@@ -50,11 +50,22 @@ CONF.Setting := {
 }
 CONF.Setting.SetOpts("PARAMS")
 
-If !FileExist(CONF_PATH) {
+If !FileExist(CONF_Path) {
+    FileAppend "", CONF_Path
+}
+If (FileRead(CONF_Path) = "") {
     CONF.WriteFile()
 }
-
 CONF.ReadFile()
+
+If !FileExist(A_ScriptDir "\lang") {
+    DirCreate(A_ScriptDir "\lang")
+}
+
+If (A_IsCompiled = 1) {
+    FileInstall(".\lang\en_us.ini", "lang\en_us.ini", 1)
+    FileInstall(".\lang\zh_cn.ini", "lang\zh_cn.ini", 1)
+}
 
 global scriptList := Array()
 global scriptMap := Map()
