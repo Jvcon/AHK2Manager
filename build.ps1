@@ -9,7 +9,7 @@ $testcommand = $ahk2exe + " /silent verbose " + " /base " + $ahk64base + " /out 
 $version = $args[0]
 $env = $args[1]
 $appname = $args[2]
-
+$zipname = $appname + "_v" + "$version"
 $setversion = ";@Ahk2Exe-SetVersion " + $version
 Write-Host "App:" $appname
 Write-Host "Version:" $version
@@ -39,11 +39,11 @@ if ($env -eq 'prod') {
     if ((Test-Path -Path "$cwd\build\checksums_v$version.txt")) {
         Remove-Item -Path $cwd\build\checksums_v$version.txt
     }
-    if ((Test-Path -Path "$cwd\build\$appname_v$version.zip")) {
-        Remove-Item -Force -Path $cwd\build\$appname_v$version.zip
+    if ((Test-Path -Path "$cwd\build\$zipname.zip")) {
+        Remove-Item -Force -Path $cwd\build\$zipname.zip
     }
-    Compress-Archive -Path .\build\*.exe -DestinationPath .\build\$appname_v$version.zip
-    $value = (Get-FileHash -Path .\build\$appname_v$version.zip -Algorithm SHA256).Hash + "  $appname_v$version.zip"
+    Compress-Archive -Path .\build\*.exe -DestinationPath .\build\$zipname.zip
+    $value = (Get-FileHash -Path .\build\$zipname.zip -Algorithm SHA256).Hash + "  $zipname.zip"
     Tee-Object -Append -InputObject $value -FilePath $cwd\build\checksums_v$version.txt
     
     foreach ($file in (Get-ChildItem -Path $cwd\build\*.exe)) {
