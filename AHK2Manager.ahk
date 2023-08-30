@@ -225,7 +225,7 @@ ProManager(*) {
     PMGui := Gui()
     WindowsTheme.SetWindowAttribute(PMGui, !sysThemeMode)
     PMGui.SetFont("s9", "Arial")
-    PMLV := PMGui.Add("ListView", "x2 y0 w250 h200", [lGUIIndex, lGUIPid, lGUIScriptname, lGUIMemory])
+    PMLV := PMGui.Add("ListView", "x2 y0 w760 h500", [lGUIIndex, lGUIPid, lGUIScriptname, lGUIMemory])
     for menuName, scriptItem in scriptMap {
         If (scriptItem.status = 1) {
             ShowIndex += 1
@@ -236,6 +236,7 @@ ProManager(*) {
     }
     PMLV.ModifyCol()
     PMLV.ModifyCol(2, "Integer")
+    PMLV.ModifyCol(3, "220")
     PMGui.Title := "Process List"
     WindowsTheme.SetWindowTheme(PMGui, !sysThemeMode)
     PMGui.Show
