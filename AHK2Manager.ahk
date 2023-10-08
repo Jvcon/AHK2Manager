@@ -34,8 +34,8 @@ for item in FolderCheckList
         DirCreate(A_ScriptDir "\" item)
     }
 
-FileInstall(".\lang\en_us.ini",".\lang\en_us.ini",1)
-FileInstall(".\lang\zh_cn.ini",".\lang\zh_cn.ini",1)
+FileInstall(".\lang\en_us.ini", ".\lang\en_us.ini", 1)
+FileInstall(".\lang\zh_cn.ini", ".\lang\zh_cn.ini", 1)
 
 Paths := EnvGet("PATH")
 EnvSet("PATH", A_ScriptDir "\bin`;" Paths)
@@ -95,9 +95,6 @@ CreateMenu()
 ; 遍历scripts目录下的ahk文件
 Loop Files A_ScriptDir "\scripts\*.ahk"
 {
-    if (WinExist(A_LoopFileName " - AutoHotkey", , ,)) {
-        WinKill
-    }
     SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
     NeedleRegEx := "(\+|\!)(\s)?([0-9]+.\s)?"
     menuName := RegExReplace(FileNameNoExt, NeedleRegEx)
@@ -105,18 +102,38 @@ Loop Files A_ScriptDir "\scripts\*.ahk"
     scriptObj.fileName := OutFileName
     scriptObj.menuName := menuName
     scriptObj.index := A_Index
-    scriptObj.status := 0
     If (Instr(OutFileName, "!") == 1) {
-        unOpenScriptListTemp.Push(menuName)
         scriptObj.scriptType := "TEMP"
+        if (WinExist(A_LoopFileName " - AutoHotkey", , ,)) {
+            scriptObj.status := 1
+            OpenScriptListTemp.Push(menuName)
+        }
+        else {
+            scriptObj.status := 0
+            unOpenScriptListTemp.Push(menuName)
+        }
     }
     else if (Instr(OutFileName, "+") == 1) {
-        unOpenScriptListOnce.Push(menuName)
         scriptObj.scriptType := "ONCE"
+        if (WinExist(A_LoopFileName " - AutoHotkey", , ,)) {
+            scriptObj.status := 1
+        }
+        else {
+            scriptObj.status := 0
+            unOpenScriptListOnce.Push(menuName)
+        }
     }
     else {
-        unOpenScriptListDeamon.Push(menuName)
         scriptObj.scriptType := "DEAMON"
+        if (WinExist(A_LoopFileName " - AutoHotkey", , ,)) {
+            scriptObj.status := 1
+            OpenScriptListDeamon.Push(menuName)
+        }
+        else {
+            scriptObj.status := 0
+            unOpenScriptListDeamon.Push(menuName)
+
+        }
     }
     scriptList.Push(scriptObj)
     scriptMap[menuName] := scriptObj
@@ -125,6 +142,9 @@ Loop Files A_ScriptDir "\scripts\*.ahk"
 AddMenuItem(unOpenScriptListTemp, 0, true)
 AddMenuItem(unOpenScriptListOnce, 0, true)
 AddMenuItem(unOpenScriptListDeamon, 0, false)
+
+AddMenuItem(OpenScriptListTemp, 1, true)
+AddMenuItem(OpenScriptListDeamon, 1, false)
 
 OpenAllTask()
 
