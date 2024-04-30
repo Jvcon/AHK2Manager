@@ -162,74 +162,75 @@ LoadScript(mode) {
         for scriptName, scriptType in CONF.SCRIPTS {
             if (!(FileExist(A_ScriptDir . "\scripts\" . scriptName . ".ahk") == "A")) {
                 CONF.SCRIPTS.Delete(scriptName)
-                CONF.COUNTSDAEMON.Delete(scriptName)
-                CONF.COUNTSONCE.Delete(scriptName)
-                CONF.COUNTSTEMP.Delete(scriptName)
-                return
+                try CONF.COUNTSDAEMON.Delete(scriptName)
+                try CONF.COUNTSONCE.Delete(scriptName)
+                try CONF.COUNTSTEMP.Delete(scriptName)
             }
-            ;@Debug-Output =>  {scriptName} :: {scriptType}
-            if (scriptType = typeEnum["DAEMON"]) {
-                ;@Debug-Output =>  {scriptName} is DAEMON SCRIPT
-
-                if (!(DetectConfig("COUNTSDAEMON", scriptName))) {
-                    original := (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
-                    CONF.COUNTSDAEMON.%scriptName% := original
-
-                }
-                if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, -1) >= 0) {
-                    ;@Debug-Output =>  Deleted frome ONCE
-                    CONF.COUNTSONCE.Delete(scriptName)
-                }
-                if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, -1) >= 0) {
-                    ;@Debug-Output =>  Deleted frome TEMP
-                    CONF.COUNTSTEMP.Delete(scriptName)
-                }
-                if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
-                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 1, A_Index)
+            else{
+                ;@Debug-Output =>  {scriptName} :: {scriptType}
+                if (scriptType = typeEnum["DAEMON"]) {
+                    ;@Debug-Output =>  {scriptName} is DAEMON SCRIPT
+    
+                    if (!(DetectConfig("COUNTSDAEMON", scriptName))) {
+                        original := (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
+                        CONF.COUNTSDAEMON.%scriptName% := original
+    
+                    }
+                    if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, -1) >= 0) {
+                        ;@Debug-Output =>  Deleted frome ONCE
+                        CONF.COUNTSONCE.Delete(scriptName)
+                    }
+                    if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, -1) >= 0) {
+                        ;@Debug-Output =>  Deleted frome TEMP
+                        CONF.COUNTSTEMP.Delete(scriptName)
+                    }
+                    if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
+                        CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 1, A_Index)
+                    } else {
+                        CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
+    
+                    }
+                } else if (scriptType = typeEnum["TEMP"]) {
+                    ;@Debug-Output =>  {scriptName} is TEMP SCRIPT
+    
+                    if (!(DetectConfig("COUNTSTEMP", scriptName))) {
+                        original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0))
+                        CONF.COUNTSTEMP.%scriptName% := original
+    
+                    }
+                    if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, -1) >= 0) {
+                        ;@Debug-Output =>  Deleted frome DAEMON
+                        CONF.COUNTSDAEMON.Delete(scriptName)
+                    }
+                    if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, -1) >= 0) {
+                        ;@Debug-Output =>  Deleted frome ONCE
+                        CONF.COUNTSONCE.Delete(scriptName)
+                    }
+                    if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
+                        CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 1, A_Index)
+                    } else {
+                        CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
+                    }
                 } else {
-                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
-
-                }
-            } else if (scriptType = typeEnum["TEMP"]) {
-                ;@Debug-Output =>  {scriptName} is TEMP SCRIPT
-
-                if (!(DetectConfig("COUNTSTEMP", scriptName))) {
-                    original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0))
-                    CONF.COUNTSTEMP.%scriptName% := original
-
-                }
-                if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, -1) >= 0) {
-                    ;@Debug-Output =>  Deleted frome DAEMON
-                    CONF.COUNTSDAEMON.Delete(scriptName)
-                }
-                if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, -1) >= 0) {
-                    ;@Debug-Output =>  Deleted frome ONCE
-                    CONF.COUNTSONCE.Delete(scriptName)
-                }
-                if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
-                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 1, A_Index)
-                } else {
-                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
-                }
-            } else {
-                ;@Debug-Output =>  {scriptName} is ONCE SCRIPT
-
-                if (!(DetectConfig("COUNTSONCE", scriptName))) {
-                    original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
-                    CONF.COUNTSONCE.%scriptName% := original
-                }
-                if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, -1) >= 0) {
-                    ;@Debug-Output =>  Deleted frome DAEMON
-                    CONF.COUNTSDAEMON.Delete(scriptName)
-                }
-                if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, -1) >= 0) {
-                    ;@Debug-Output =>  Deleted frome TEMP
-                    CONF.COUNTSTEMP.Delete(scriptName)
-                }
-                if (!(WinExist(scriptName ".ahk - AutoHotkey", , ,))) {
-                ;@Debug-Output =>  {scriptType} to create info
-
-                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
+                    ;@Debug-Output =>  {scriptName} is ONCE SCRIPT
+    
+                    if (!(DetectConfig("COUNTSONCE", scriptName))) {
+                        original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
+                        CONF.COUNTSONCE.%scriptName% := original
+                    }
+                    if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, -1) >= 0) {
+                        ;@Debug-Output =>  Deleted frome DAEMON
+                        CONF.COUNTSDAEMON.Delete(scriptName)
+                    }
+                    if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, -1) >= 0) {
+                        ;@Debug-Output =>  Deleted frome TEMP
+                        CONF.COUNTSTEMP.Delete(scriptName)
+                    }
+                    if (!(WinExist(scriptName ".ahk - AutoHotkey", , ,))) {
+                    ;@Debug-Output =>  {scriptType} to create info
+    
+                        CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
+                    }
                 }
             }
         }
