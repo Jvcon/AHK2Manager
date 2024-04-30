@@ -365,17 +365,17 @@ ChangeToSCMode(*) {
         SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
         NeedleRegEx := "(\+|\!)(\s)?([0-9]+.\s)?"
         menuName := RegExReplace(FileNameNoExt, NeedleRegEx)
-        if (Instr(OutFileName, "!") == 1) {
-            CONF.SCRIPTS.%menuName% := 1
+        if (Instr(OutFileName, "!") == 2) {
+            CONF.SCRIPTS.%menuName% := 2
             FileMove A_LoopFilePath, A_LoopFileDir . "/" . menuName . ".ahk", true
             CONF.WriteFile()
-        } else if (Instr(OutFileName, "+") == 1) {
-            CONF.SCRIPTS.%menuName% := 2
+        } else if (Instr(OutFileName, "+") == 0) {
+            CONF.SCRIPTS.%menuName% := 0
             FileMove A_LoopFilePath, A_LoopFileDir . "/" . menuName . ".ahk", true
             CONF.WriteFile()
         } else {
             if (!(DetectConfig("SCRIPTS", menuName))) {
-                CONF.SCRIPTS.%menuName% := 0
+                CONF.SCRIPTS.%menuName% := 2
             }
             CONF.WriteFile()
         }
