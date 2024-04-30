@@ -11,7 +11,7 @@ Copyright 2022-2023 Jacques Yip
 
 ;@Ahk2Exe-SetName AHK2Manager
 ;@Ahk2Exe-SetDescription AHK2Manager
-;@Ahk2Exe-SetVersion 0.1.1
+;@Ahk2Exe-SetVersion 0.1.2
 ;@Ahk2Exe-SetCopyright Jacques Yip
 ;@Ahk2Exe-SetOrigFilename AHK2Manager.exe
 ;@Ahk2Exe-SetMainIcon icons\main_light.ico
