@@ -115,7 +115,6 @@ if (A_Args.Length > 0) {
 }
 
 InitialLanguage()
-
 CreateLangMenu()
 CreateTrayMenu()
 LoadScript(CONF.Setting.mode)
@@ -150,38 +149,37 @@ Return
 #+r:: ReloadTray
 
 ; --------------------- MENU EVENT RESPONSE --------------------------
-
 LoadScript(mode) {
-    CONF.ReadFile()
+    global
     if (mode = 1) {
         Loop Files A_ScriptDir "\scripts\*.ahk" {
             SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
             if (!(DetectConfig("SCRIPTS", FileNameNoExt))) {
                 CONF.SCRIPTS.%FileNameNoExt% := 0
             }
-            CONF.WriteFile()
         }
-
         for scriptName, scriptType in CONF.SCRIPTS {
             if (!(FileExist(A_ScriptDir . "\scripts\" . scriptName . ".ahk") == "A")) {
-                IniDelete(CONF_PATH, "SCRIPTS", scriptName)
-                IniDelete(CONF_PATH, "COUNTSDAEMON", scriptName)
-                IniDelete(CONF_PATH, "COUNTSONCE", scriptName)
-                IniDelete(CONF_PATH, "COUNTSTEMP", scriptName)
-                CONF.ReadFile()
+                CONF.SCRIPTS.Delete(scriptName)
+                CONF.COUNTSDAEMON.Delete(scriptName)
+                CONF.COUNTSONCE.Delete(scriptName)
+                CONF.COUNTSTEMP.Delete(scriptName)
                 return
             }
+            ;@Debug-Output =>  {scriptName} :: {scriptType}
             if (scriptType = typeEnum["DAEMON"]) {
                 if (!(DetectConfig("COUNTSDAEMON", scriptName))) {
                     original := (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
                     CONF.COUNTSDAEMON.%scriptName% := original
-                    CONF.WriteFile()
+
                 }
-                if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0) > 0) {
-                    IniDelete(CONF_PATH, "COUNTSONCE", scriptName)
+                if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, -1) >= 0) {
+                    ;@Debug-Output =>  Deleted frome ONCE
+                    CONF.COUNTSONCE.Delete(scriptName)
                 }
-                if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0) > 0) {
-                    IniDelete(CONF_PATH, "COUNTSTEMP", scriptName)
+                if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, -1) >= 0) {
+                    ;@Debug-Output =>  Deleted frome TEMP
+                    CONF.COUNTSTEMP.Delete(scriptName)
                 }
                 if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
                     CreateTaskInfo(scriptName, OutFileName, scriptType, 1, A_Index)
@@ -193,13 +191,15 @@ LoadScript(mode) {
                 if (!(DetectConfig("COUNTSTEMP", scriptName))) {
                     original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0))
                     CONF.COUNTSTEMP.%scriptName% := original
-                    CONF.WriteFile()
+
                 }
-                if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0) > 0) {
-                    IniDelete(CONF_PATH, "COUNTSDAEMON", scriptName)
+                if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, -1) >= 0) {
+                    ;@Debug-Output =>  Deleted frome DAEMON
+                    CONF.COUNTSDAEMON.Delete(scriptName)
                 }
-                if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0) > 0) {
-                    IniDelete(CONF_PATH, "COUNTSONCE", scriptName)
+                if (IniRead(CONF_PATH, "COUNTSONCE", scriptName, -1) >= 0) {
+                    ;@Debug-Output =>  Deleted frome ONCE
+                    CONF.COUNTSONCE.Delete(scriptName)
                 }
                 if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
                     CreateTaskInfo(scriptName, OutFileName, scriptType, 1, A_Index)
@@ -210,19 +210,21 @@ LoadScript(mode) {
                 if (!(DetectConfig("COUNTSONCE", scriptName))) {
                     original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
                     CONF.COUNTSONCE.%scriptName% := original
-                    CONF.WriteFile()
                 }
-                if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0) > 0) {
-                    IniDelete(CONF_PATH, "COUNTSDAEMON", scriptName)
+                if (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, -1) >= 0) {
+                    ;@Debug-Output =>  Deleted frome DAEMON
+                    CONF.COUNTSDAEMON.Delete(scriptName)
                 }
-                if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0) > 0) {
-                    IniDelete(CONF_PATH, "COUNTSTEMP", scriptName)
+                if (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, -1) >= 0) {
+                    ;@Debug-Output =>  Deleted frome TEMP
+                    CONF.COUNTSTEMP.Delete(scriptName)
                 }
                 if (!(WinExist(scriptName ".ahk - AutoHotkey", , ,))) {
                     CreateTaskInfo(scriptName, OutFileName, scriptType, 0, A_Index)
                 }
             }
         }
+        CONF.WriteFile()
     } else {
         ; 遍历scripts目录下的ahk文件
         Loop Files A_ScriptDir "\scripts\*.ahk" {
@@ -250,7 +252,6 @@ LoadScript(mode) {
             }
         }
     }
-    CONF.ReadFile()
 }
 
 OpenTask(ItemName, ItemPos, MyMenu) {
@@ -365,11 +366,11 @@ ChangeToSCMode(*) {
         SplitPath A_LoopFileName, &OutFileName, , , &FileNameNoExt
         NeedleRegEx := "(\+|\!)(\s)?([0-9]+.\s)?"
         menuName := RegExReplace(FileNameNoExt, NeedleRegEx)
-        if (Instr(OutFileName, "!") == 2) {
-            CONF.SCRIPTS.%menuName% := 2
+        if (Instr(OutFileName, "!") == 1) {
+            CONF.SCRIPTS.%menuName% := 1
             FileMove A_LoopFilePath, A_LoopFileDir . "/" . menuName . ".ahk", true
             CONF.WriteFile()
-        } else if (Instr(OutFileName, "+") == 0) {
+        } else if (Instr(OutFileName, "+") == 1) {
             CONF.SCRIPTS.%menuName% := 0
             FileMove A_LoopFilePath, A_LoopFileDir . "/" . menuName . ".ahk", true
             CONF.WriteFile()
@@ -377,7 +378,6 @@ ChangeToSCMode(*) {
             if (!(DetectConfig("SCRIPTS", menuName))) {
                 CONF.SCRIPTS.%menuName% := 2
             }
-            CONF.WriteFile()
         }
     }
 }
@@ -482,40 +482,40 @@ CreateMenu(*) {
     restartMenu.ToggleEnable(lTrayRestart)
     restartMenu.Default := lTrayRestart
     restartMenu.Add
-    
-        unOpenScriptListTemp := Array()
-        unOpenScriptListOnce := Array()
-        unOpenScriptListDaemon := Array()
-    
-        OpenScriptListTemp := Array()
-        OpenScriptListDaemon := Array()
-    
-    
-        for menuName, scriptItem in scriptMap {
-            if (scriptItem.scriptType = typeEnum["ONCE"]) {
-                unOpenScriptListOnce.Push(menuName)
-            }
-            if (scriptItem.scriptType = typeEnum["TEMP"]) {
-                If (scriptItem.status = 0) {
-                    unOpenScriptListTemp.Push(menuName)
-                } else {
-                    OpenScriptListTemp.Push(menuName)
-                }
+
+    unOpenScriptListTemp := Array()
+    unOpenScriptListOnce := Array()
+    unOpenScriptListDaemon := Array()
+
+    OpenScriptListTemp := Array()
+    OpenScriptListDaemon := Array()
+
+
+    for menuName, scriptItem in scriptMap {
+        if (scriptItem.scriptType = typeEnum["ONCE"]) {
+            unOpenScriptListOnce.Push(menuName)
+        }
+        if (scriptItem.scriptType = typeEnum["TEMP"]) {
+            If (scriptItem.status = 0) {
+                unOpenScriptListTemp.Push(menuName)
             } else {
-                If (scriptItem.status = 0) {
-                    unOpenScriptListDaemon.Push(menuName)
-                } else {
-                    OpenScriptListDaemon.Push(menuName)
-                }
+                OpenScriptListTemp.Push(menuName)
+            }
+        } else {
+            If (scriptItem.status = 0) {
+                unOpenScriptListDaemon.Push(menuName)
+            } else {
+                OpenScriptListDaemon.Push(menuName)
             }
         }
-    
-        AddMenuItem(unOpenScriptListTemp, 0, unOpenScriptListTemp.Length > 0)
-        AddMenuItem(unOpenScriptListOnce, 0, unOpenScriptListOnce.Length > 0)
-        AddMenuItem(unOpenScriptListDaemon, 0, false)
-    
-        AddMenuItem(OpenScriptListTemp, 1, OpenScriptListTemp.Length > 0)
-        AddMenuItem(OpenScriptListDaemon, 1, false)
+    }
+
+    AddMenuItem(unOpenScriptListTemp, 0, unOpenScriptListTemp.Length > 0)
+    AddMenuItem(unOpenScriptListOnce, 0, unOpenScriptListOnce.Length > 0)
+    AddMenuItem(unOpenScriptListDaemon, 0, false)
+
+    AddMenuItem(OpenScriptListTemp, 1, OpenScriptListTemp.Length > 0)
+    AddMenuItem(OpenScriptListDaemon, 1, false)
 }
 
 RecreateMenu(*) {
