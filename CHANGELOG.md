@@ -1,3 +1,12 @@
+## [0.1.2](https://github.com/Jvcon/AHK2Manager/compare/v0.1.1...v0.1.2) (2024-04-30)
+
+
+### Bug Fixes
+
+* fix CreateTaskInfo() with wrong filename and detect windows error ([270d66b](https://github.com/Jvcon/AHK2Manager/commit/270d66bb36242a57a504681f19639a3f3b3fcc71))
+
+
+
 ## [0.1.1](https://github.com/Jvcon/AHK2Manager/compare/v0.1.0...v0.1.1) (2024-04-30)
 
 
