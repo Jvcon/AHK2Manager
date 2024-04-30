@@ -27,7 +27,8 @@ Copyright 2022-2023 Jacques Yip
 
 SetWorkingDir A_ScriptDir
 #SingleInstance Force
-SetTitleMatchMode 2
+SetTitleMatchMode 1
+DetectHiddenWindows 1
 FileEncoding "UTF-8-RAW"
 
 FolderCheckList := ["lang", "scripts", "icons", "lib"]
@@ -168,6 +169,8 @@ LoadScript(mode) {
             }
             ;@Debug-Output =>  {scriptName} :: {scriptType}
             if (scriptType = typeEnum["DAEMON"]) {
+                ;@Debug-Output =>  {scriptName} is DAEMON SCRIPT
+
                 if (!(DetectConfig("COUNTSDAEMON", scriptName))) {
                     original := (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
                     CONF.COUNTSDAEMON.%scriptName% := original
@@ -182,12 +185,14 @@ LoadScript(mode) {
                     CONF.COUNTSTEMP.Delete(scriptName)
                 }
                 if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
-                    CreateTaskInfo(scriptName, OutFileName, scriptType, 1, A_Index)
+                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 1, A_Index)
                 } else {
-                    CreateTaskInfo(scriptName, OutFileName, scriptType, 0, A_Index)
+                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
 
                 }
             } else if (scriptType = typeEnum["TEMP"]) {
+                ;@Debug-Output =>  {scriptName} is TEMP SCRIPT
+
                 if (!(DetectConfig("COUNTSTEMP", scriptName))) {
                     original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSONCE", scriptName, 0))
                     CONF.COUNTSTEMP.%scriptName% := original
@@ -202,11 +207,13 @@ LoadScript(mode) {
                     CONF.COUNTSONCE.Delete(scriptName)
                 }
                 if (WinExist(scriptName ".ahk - AutoHotkey", , ,)) {
-                    CreateTaskInfo(scriptName, OutFileName, scriptType, 1, A_Index)
+                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 1, A_Index)
                 } else {
-                    CreateTaskInfo(scriptName, OutFileName, scriptType, 0, A_Index)
+                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
                 }
             } else {
+                ;@Debug-Output =>  {scriptName} is ONCE SCRIPT
+
                 if (!(DetectConfig("COUNTSONCE", scriptName))) {
                     original := (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) > (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0)) ? (IniRead(CONF_PATH, "COUNTSDAEMON", scriptName, 0)) : (IniRead(CONF_PATH, "COUNTSTEMP", scriptName, 0))
                     CONF.COUNTSONCE.%scriptName% := original
@@ -220,7 +227,9 @@ LoadScript(mode) {
                     CONF.COUNTSTEMP.Delete(scriptName)
                 }
                 if (!(WinExist(scriptName ".ahk - AutoHotkey", , ,))) {
-                    CreateTaskInfo(scriptName, OutFileName, scriptType, 0, A_Index)
+                ;@Debug-Output =>  {scriptType} to create info
+
+                    CreateTaskInfo(scriptName, scriptName . ".ahk", scriptType, 0, A_Index)
                 }
             }
         }
@@ -257,7 +266,7 @@ LoadScript(mode) {
 OpenTask(ItemName, ItemPos, MyMenu) {
     scriptItem := scriptMap[ItemName]
     Run A_ScriptDir "\scripts\" scriptItem.fileName
-    if (scriptItem.scriptType != typeEnum["Once"]) {
+    if (scriptItem.scriptType != typeEnum["ONCE"]) {
         UpdateTaskStatus(ItemName, 1)
         RecreateMenu()
     }
@@ -266,8 +275,8 @@ OpenTask(ItemName, ItemPos, MyMenu) {
 
 RestartTask(ItemName, ItemPos, MyMenu) {
     scriptItem := scriptMap[ItemName]
-    If WinExist(scriptItem.fileName " - AutoHotkey", , ,) {
-        WinClose(scriptItem.fileName " - AutoHotkey", , ,)
+    If WinExist(A_ScriptDir "\scripts\" scriptItem.fileName " - AutoHotkey", , ,) {
+        WinClose(A_ScriptDir "\scripts\" scriptItem.fileName " - AutoHotkey", , ,)
     }
     Run A_ScriptDir "\scripts\" scriptItem.fileName
     UpdateTaskStatus(ItemName, 1)
@@ -276,8 +285,8 @@ RestartTask(ItemName, ItemPos, MyMenu) {
 
 CloseTask(ItemName, ItemPos, MyMenu) {
     scriptItem := scriptMap[ItemName]
-    If WinExist(scriptItem.fileName " - AutoHotkey", , ,) {
-        WinClose(scriptItem.fileName " - AutoHotkey", , ,)
+    If WinExist( A_ScriptDir "\scripts\" scriptItem.fileName " - AutoHotkey", , ,) {
+        WinClose( A_ScriptDir "\scripts\" scriptItem.fileName " - AutoHotkey", , ,)
     }
     UpdateTaskStatus(ItemName, 0)
     RecreateMenu()
@@ -287,7 +296,7 @@ CloseTask(ItemName, ItemPos, MyMenu) {
 OpenAllTask(*) {
     for menuName, scriptItem in scriptMap {
         If (scriptItem.status = 0) {
-            if (scriptItem.scriptType = typeEnum["DAEMON"]) {
+            if (scriptItem.scriptType == typeEnum["DAEMON"]) {
                 Run A_ScriptDir "\scripts\" scriptItem.fileName
                 UpdateTaskStatus(menuName, 1)
                 try startMenu.Delete(menuName)
@@ -301,7 +310,7 @@ OpenAllTask(*) {
 CloseAllTask(*) {
     for menuName, scriptItem in scriptMap {
         If (scriptItem.status = 1) {
-            try WinClose(scriptItem.fileName " - AutoHotkey", , ,)
+            try WinClose(A_ScriptDir "\scripts\" scriptItem.fileName " - AutoHotkey", , ,)
             UpdateTaskStatus(menuName, 0)
         }
     }
