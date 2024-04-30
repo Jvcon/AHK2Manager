@@ -1,6 +1,7 @@
 # Autohotkey
 /build
 /test
+/scripts
 setting.ini
 
 # Logs
