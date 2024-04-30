@@ -5,11 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "ahk2",
+            "name": "Normal Debug",
+            "type": "autohotkey",
             "request": "launch",
-            "name": "AutoHotkey v2 Debugger",
             "program": "${file}",
-            "stopOnEntry": true
-        }
+            "args": [],
+            "port": "9002-9010",
+            "variableCategories": "recommend",
+            "useDebugDirective": true,
+            "useAutoJumpToError": true
+        },
+        {
+            "name": "SwitchRC Mode",
+            "type": "autohotkey",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["mode","rc"],
+            "port": "9002-9010",
+            "variableCategories": "recommend",
+            "useDebugDirective": true,
+            "useAutoJumpToError": true
+        },
+       
     ]
 }
