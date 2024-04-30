@@ -1,3 +1,12 @@
+## [0.1.1](https://github.com/Jvcon/AHK2Manager/compare/v0.1.0...v0.1.1) (2024-04-30)
+
+
+### Bug Fixes
+
+* **ahk2manager.ahk:** fix command conversion funciton ([9c906b1](https://github.com/Jvcon/AHK2Manager/commit/9c906b168e5e462d152f170b4567259ab68a1314))
+
+
+
 # [0.1.0](https://github.com/Jvcon/AHK2Manager/compare/v0.0.9...v0.1.0) (2024-04-30)
 
 
